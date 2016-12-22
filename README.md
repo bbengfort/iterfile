@@ -4,9 +4,9 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/bbengfort/iterfile)](https://goreportcard.com/report/github.com/bbengfort/iterfile)
 [![GoDoc](https://godoc.org/github.com/bbengfort/iterfile?status.svg)](https://godoc.org/github.com/bbengfort/iterfile)
 
-**Benchmarking for various file iteration utilities**
-
 [![Lines & Curves](fixtures/lines.jpg)](https://flic.kr/p/iaVByW)
+
+**Benchmarking for various file iteration utilities**
 
 This small library provides various mechanisms for reading a file one line at a time. These utilities aren't necessarily meant to be used as a library for use in production code  (though you're more than welcome to) but rather to profile and benchmark various iteration constructs. See [Benchmarking Readline Iterators](https://bbengfort.github.io/programmer/2016/12/22/benchmarking-readlines.html) for a complete post about this repository.
 
@@ -14,9 +14,10 @@ This small library provides various mechanisms for reading a file one line at a 
 
 ## Usage
 
-All of the functions in this library are `Readlines` functions; that is they take as input at least the path to a file, and then provide some iterable context with which to handle one line of the file at a time. The examples for usage here will simply be line counts, the testing methodology uses line, word, and character counts (less the newline characters). Currently we have implemented:
+All of the functions in this library are `Readlines` functions; that is they take as input at least the path to a file, and then provide some iterable context with which to handle one line of the file at a time. The examples for usage here will simply be a line character count (less the newlines), the testing methodology uses line, word, and character counts. Currently we have implemented:
 
 - `ChanReadlines`: returns a channel to `range` on.
+- `CallbackReadlines` accepts a per-line callback function
 
 ### Channel Readlines
 
@@ -24,7 +25,7 @@ Use the channel based readlines iterator as follows:
 
 ```go
 // construct the reader and the line count.
-var lines int
+var chars int
 reader, err := ChanReadlines("fixtures/small.txt")
 
 // check if there was an error opening the file or scanning.
@@ -34,20 +35,49 @@ if err != nil {
 
 // iterate over the lines using range
 for line := range reader {
-    lines++
+    chars += len(line)
 }
 ```
 
 Variants of this reader would not require the error checking at the beginning, but would rather yield errors in iteration along with the line.
+
+### Callback Readlines
+
+Use the callback-style readlines iterator as follows:
+
+```go
+var chars int
+
+// Define the callback function
+cb := func(line string) error {
+    chars += len(line)
+    return nil
+}
+
+// Pass the callback to the iterator
+err := CallbackReadlines("fixtures/small.txt", cb)
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+Note that in this mechanism, you can `break` out of the loop by returning an
+error from the callback, which will cause the calling iterator to return and
+hopefully also close the file and be done!
 
 ## Benchmarks
 
 Benchmarks can be run with the `go test -bench=.` command. The current benchmarks are as follows:
 
 ```
-BenchmarkChanReadlinesSmall-8    	   20000	     72816 ns/op
-BenchmarkChanReadlinesMedium-8   	    2000	    636396 ns/op
-BenchmarkChanReadlinesLarge-8    	     200	   6236999 ns/op
+BenchmarkChanReadlinesSmall-8         	   20000	     74650 ns/op
+BenchmarkChallbackReadlinesSmall-8    	   50000	     28843 ns/op
+
+BenchmarkChanReadlinesMedium-8        	    2000	    625319 ns/op
+BenchmarkChallbackReadlinesMedium-8   	   10000	    216688 ns/op
+
+BenchmarkChanReadlinesLarge-8         	     300	   6246945 ns/op
+BenchmarkChallbackReadlinesLarge-8    	    1000	   2182745 ns/op
 ```
 
 We benchmark each line count function on small (100 lines), medium (1000 lines) and large (10000 lines) text files.  
@@ -58,6 +88,6 @@ Learning a new programming language often means that you want to explore everyth
 
 ### Acknowledgements
 
-Table based testing inspired by Dave Chaney's [Writing table driven tests in Go](https://dave.cheney.net/2013/06/09/writing-table-driven-tests-in-go) blog post. Benchmarking was similarly inspired by [How to write benchmarks in Go](https://dave.cheney.net/2013/06/30/how-to-write-benchmarks-in-go). Check those posts out if you haven't already.
+Most of the iterators were implemented based on Ewan Cheslack-Postava's [Iterators in Go](https://ewencp.org/blog/golang-iterators/) blob post. Table based testing inspired by Dave Chaney's [Writing table driven tests in Go](https://dave.cheney.net/2013/06/09/writing-table-driven-tests-in-go) blog post. Benchmarking was similarly inspired by [How to write benchmarks in Go](https://dave.cheney.net/2013/06/30/how-to-write-benchmarks-in-go). Check those posts out if you haven't already.
 
 The banner image used in this README, [&ldquo;lines & curves&rdquo;](https://flic.kr/p/iaVByW) by [Josef Stuefer](https://www.flickr.com/photos/josefstuefer/) is used by a Creative Commons [BY-NC-ND](https://creativecommons.org/licenses/by-nc-nd/2.0/) license.
