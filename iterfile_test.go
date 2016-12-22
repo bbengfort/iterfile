@@ -45,15 +45,15 @@ func TestChanReadlines(t *testing.T) {
 
 		// Compare the counts to actual values.
 		if lines != lt.lines {
-			t.Errorf("expected %d lines got %d lines", lt.lines, lines)
+			t.Errorf("ChanReadlines expected %d lines got %d lines", lt.lines, lines)
 		}
 
 		if words != lt.words {
-			t.Errorf("expected %d words got %d words", lt.words, words)
+			t.Errorf("ChanReadlines expected %d words got %d words", lt.words, words)
 		}
 
 		if chars != lt.chars {
-			t.Errorf("expected %d chars got %d chars", lt.chars, chars)
+			t.Errorf("ChanReadlines expected %d chars got %d chars", lt.chars, chars)
 		}
 
 	}
@@ -82,7 +82,7 @@ func TestCallbackReadlines(t *testing.T) {
 			chars int
 		)
 
-		CallbackReadlines(lt.path, func(line string) error {
+		err := CallbackReadlines(lt.path, func(line string) error {
 			lines++            // count the number of lines
 			chars += len(line) // count the number of chars
 
@@ -92,17 +92,21 @@ func TestCallbackReadlines(t *testing.T) {
 			return nil
 		})
 
+		if err != nil {
+			t.Fatalf("could not test CallbackReadlines on %s", lt.path)
+		}
+
 		// Compare the counts to actual values.
 		if lines != lt.lines {
-			t.Errorf("expected %d lines got %d lines", lt.lines, lines)
+			t.Errorf("CallbackReadlines expected %d lines got %d lines", lt.lines, lines)
 		}
 
 		if words != lt.words {
-			t.Errorf("expected %d words got %d words", lt.words, words)
+			t.Errorf("CallbackReadlines expected %d words got %d words", lt.words, words)
 		}
 
 		if chars != lt.chars {
-			t.Errorf("expected %d chars got %d chars", lt.chars, chars)
+			t.Errorf("CallbackReadlines expected %d chars got %d chars", lt.chars, chars)
 		}
 
 	}
@@ -121,3 +125,96 @@ func benchmarkCallbackReadlines(path string, b *testing.B) {
 func BenchmarkChallbackReadlinesSmall(b *testing.B)  { benchmarkCallbackReadlines(lineTests[0].path, b) }
 func BenchmarkChallbackReadlinesMedium(b *testing.B) { benchmarkCallbackReadlines(lineTests[1].path, b) }
 func BenchmarkChallbackReadlinesLarge(b *testing.B)  { benchmarkCallbackReadlines(lineTests[2].path, b) }
+
+func TestGeneratorReadlines(t *testing.T) {
+	t.Skip("generator readlines function is not working right now")
+
+	for _, lt := range lineTests {
+
+		var (
+			lines int
+			words int
+			chars int
+		)
+
+		var line string
+		for gen, next, err := GeneratorReadlines(lt.path); next; line, next, err = gen() {
+			if err != nil {
+				t.Fatalf("could not test GeneratorReadlines on %s", lt.path)
+				break
+			}
+			lines++            // count the number of lines
+			chars += len(line) // count the number of chars
+
+			tokens := strings.Split(line, " ")
+			words += len(tokens)
+		}
+
+		// Compare the counts to actual values.
+		if lines != lt.lines {
+			t.Errorf("GeneratorReadlines expected %d lines got %d lines", lt.lines, lines)
+		}
+
+		if words != lt.words {
+			t.Errorf("GeneratorReadlines expected %d words got %d words", lt.words, words)
+		}
+
+		if chars != lt.chars {
+			t.Errorf("GeneratorReadlines expected %d chars got %d chars", lt.chars, chars)
+		}
+
+	}
+}
+
+func TestIteratorReadlines(t *testing.T) {
+	for _, lt := range lineTests {
+
+		var (
+			lines int
+			words int
+			chars int
+		)
+
+		reader, err := IteratorReadlines(lt.path)
+		if err != nil {
+			t.Fatalf("could not test IteratorReadlines on %s", lt.path)
+
+		}
+		for reader.Next() {
+			line := reader.Line()
+			lines++            // count the number of lines
+			chars += len(line) // count the number of chars
+
+			tokens := strings.Split(line, " ")
+			words += len(tokens)
+		}
+
+		// Compare the counts to actual values.
+		if lines != lt.lines {
+			t.Errorf("IteratorReadlines expected %d lines got %d lines", lt.lines, lines)
+		}
+
+		if words != lt.words {
+			t.Errorf("IteratorReadlines expected %d words got %d words", lt.words, words)
+		}
+
+		if chars != lt.chars {
+			t.Errorf("IteratorReadlines expected %d chars got %d chars", lt.chars, chars)
+		}
+
+	}
+}
+
+func benchmarkIteratorReadlines(path string, b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		var chars int
+		reader, _ := IteratorReadlines(path)
+		for reader.Next() {
+			chars += len(reader.Line())
+		}
+	}
+}
+
+func BenchmarkIteratorReadlinesSmall(b *testing.B)  { benchmarkIteratorReadlines(lineTests[0].path, b) }
+func BenchmarkIteratorReadlinesMedium(b *testing.B) { benchmarkIteratorReadlines(lineTests[1].path, b) }
+func BenchmarkIteratorReadlinesLarge(b *testing.B)  { benchmarkIteratorReadlines(lineTests[2].path, b) }

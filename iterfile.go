@@ -81,3 +81,88 @@ func CallbackReadlines(path string, cb func(string) error) error {
 
 	return nil
 }
+
+// GeneratorReadlines returns a closure that can be called multiple times as
+// though it were a generator function, creating kind of an interesting for
+// expression construct that can be fit into a single line. Basic usage is:
+//
+//     for gen, next, err := GeneratorReadlines("myfile.txt"); next; line, next, err = gen() {
+//         // do something with the line
+//     }
+//
+// The loop stops when the generator next bool returns false.
+func GeneratorReadlines(path string) (func() (string, bool, error), bool, error) {
+	scanner, file, err := openFile(path)
+	if err != nil {
+		return nil, false, err
+	}
+
+	next := scanner.Scan()
+	line := scanner.Text()
+
+	return func() (string, bool, error) {
+		prevLine := line
+		next = scanner.Scan()
+		line = scanner.Text()
+
+		if !next {
+			file.Close()
+		}
+
+		return prevLine, next, nil
+
+	}, next, nil
+}
+
+// LineIterator specifies how an iterable object over file lines should work.
+type LineIterator interface {
+	Next() bool   // Advances the iterator to the next line
+	Line() string // Returns the current line of iteration
+}
+
+type lineIterator struct {
+	file    *os.File       // Reference to the open file
+	scanner *bufio.Scanner // Reference to the scanner object
+	current string         // The current line for multiple Line() calls
+}
+
+// Line returns the current line of the line iterator.
+func (lit *lineIterator) Line() string {
+	return lit.current
+}
+
+// Next advances the iterator with the scanner and returns whether or not
+// another line exists on the stateful iterator object.
+func (lit *lineIterator) Next() bool {
+	hasNext := lit.scanner.Scan()
+	lit.current = lit.scanner.Text()
+
+	if !hasNext {
+		lit.file.Close()
+	}
+
+	return hasNext
+}
+
+// IteratorReadlines returns a LineIterator to loop over by calling its Next()
+// method and obtaining the value with its Line() method. Basic usage is:
+//
+//     reader, err := IteratorReadlines("myfile.txt")
+//     for reader.Next() {
+//          line := reader.Line()
+//          // do something with the line
+//     }
+//
+// Once the LineIterator is exahusted it cannot be used again or reset.
+func IteratorReadlines(path string) (LineIterator, error) {
+	scanner, file, err := openFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return &lineIterator{
+		scanner: scanner,
+		file:    file,
+		current: "",
+	}, nil
+}

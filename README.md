@@ -17,7 +17,8 @@ This small library provides various mechanisms for reading a file one line at a 
 All of the functions in this library are `Readlines` functions; that is they take as input at least the path to a file, and then provide some iterable context with which to handle one line of the file at a time. The examples for usage here will simply be a line character count (less the newlines), the testing methodology uses line, word, and character counts. Currently we have implemented:
 
 - `ChanReadlines`: returns a channel to `range` on.
-- `CallbackReadlines` accepts a per-line callback function
+- `CallbackReadlines`: accepts a per-line callback function.
+- `IteratorReadlines`: returns a stateful iterator.
 
 ### Channel Readlines
 
@@ -65,22 +66,56 @@ Note that in this mechanism, you can `break` out of the loop by returning an
 error from the callback, which will cause the calling iterator to return and
 hopefully also close the file and be done!
 
+## Iterator Readlines
+
+Use the stateful iterator returned by the readlines iterator as follows:
+
+```go
+var chars int
+reader, err := IteratorReadlines("fixtures/small.txt")
+
+// check if there was an error opening the file or scanning.
+if err != nil {
+    log.Fatal(err)
+}
+
+// iterate over the stateful LineIterator that has been returned.
+for reader.Next() {
+    chars += len(reader.Line())
+}
+```
+
 ## Benchmarks
 
 Benchmarks can be run with the `go test -bench=.` command. The current benchmarks are as follows:
 
 ```
-BenchmarkChanReadlinesSmall-8         	   20000	     74650 ns/op
-BenchmarkChallbackReadlinesSmall-8    	   50000	     28843 ns/op
+BenchmarkChanReadlinesSmall-8         	   20000	     74958 ns/op
+BenchmarkChallbackReadlinesSmall-8    	   50000	     28836 ns/op
+BenchmarkIteratorReadlinesSmall-8     	   50000	     29006 ns/op
 
-BenchmarkChanReadlinesMedium-8        	    2000	    625319 ns/op
-BenchmarkChallbackReadlinesMedium-8   	   10000	    216688 ns/op
+BenchmarkChanReadlinesMedium-8        	    2000	    621716 ns/op
+BenchmarkChallbackReadlinesMedium-8   	   10000	    216734 ns/op
+BenchmarkIteratorReadlinesMedium-8    	   10000	    219842 ns/op
 
-BenchmarkChanReadlinesLarge-8         	     300	   6246945 ns/op
-BenchmarkChallbackReadlinesLarge-8    	    1000	   2182745 ns/op
+BenchmarkChanReadlinesLarge-8         	     200	   6250004 ns/op
+BenchmarkChallbackReadlinesLarge-8    	    1000	   2198904 ns/op
+BenchmarkIteratorReadlinesLarge-8     	    1000	   2229104 ns/op
 ```
 
-We benchmark each line count function on small (100 lines), medium (1000 lines) and large (10000 lines) text files.  
+We benchmark each word count function on small (100 lines), medium (1000 lines) and large (10000 lines) text files.  
+
+## Help Wanted!
+
+Have a method or mechanism for line-by-line reading of a file, submit it with a pull-request and add it to the list of benchmarks! In particular, I couldn't get the closure-style of read-by-line iterator work:
+
+```go
+for gen, next, err := GeneratorReadlines("myfile.txt"); next; line, next, err = gen() {
+    // do something with the line
+}
+```
+
+I was either not getting all the lines or I was getting a final line that was simply the empty string, making all my counts incorrect. If you're interested in this problem, take a look at the current implementation and tests. Submit an issue if you'd like to discuss it!
 
 ## About
 
