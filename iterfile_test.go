@@ -58,3 +58,17 @@ func TestChanReadlines(t *testing.T) {
 
 	}
 }
+
+func benchmarkChanReadlines(path string, b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		var chars int
+		reader, _ := ChanReadlines(path)
+		for line := range reader {
+			chars += len(line)
+		}
+	}
+}
+
+func BenchmarkChanReadlinesSmall(b *testing.B)  { benchmarkChanReadlines(lineTests[0].path, b) }
+func BenchmarkChanReadlinesMedium(b *testing.B) { benchmarkChanReadlines(lineTests[1].path, b) }
+func BenchmarkChanReadlinesLarge(b *testing.B)  { benchmarkChanReadlines(lineTests[2].path, b) }

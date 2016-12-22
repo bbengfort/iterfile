@@ -13,7 +13,9 @@ import (
 // range keyword for looping over every line in the file. Basic usage is:
 //
 //     reader, err := ChanReadlines("myfile.txt")
-//     for line := range reader {}
+//     for line := range reader {
+//         // do something with the line
+//     }
 //
 // The channel will be closed by the reader when the entire file is read.
 func ChanReadlines(path string) (<-chan string, error) {
