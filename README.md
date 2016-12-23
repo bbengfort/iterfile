@@ -8,9 +8,9 @@
 
 **Benchmarking for various file iteration utilities**
 
-This small library provides various mechanisms for reading a file one line at a time. These utilities aren't necessarily meant to be used as a library for use in production code  (though you're more than welcome to) but rather to profile and benchmark various iteration constructs. See [Benchmarking Readline Iterators](https://bbengfort.github.io/programmer/2016/12/22/benchmarking-readlines.html) for a complete post about this repository.
+This small library provides various mechanisms for reading a file one line at a time. These utilities aren't necessarily meant to be used as a library for use in production code  (though you're more than welcome to) but rather to profile and benchmark various iteration constructs. See [Benchmarking Readline Iterators](http://bbengfort.github.io/programmer/2016/12/23/benchmarking-readlines.html) for a quick writeup about this repository.
 
-> Read more at [Benchmarking Readline Iterators](https://bbengfort.github.io/programmer/2016/12/22/benchmarking-readlines.html) and [Yielding Functions for Iteration in Go](http://bbengfort.github.io/snippets/2016/12/22/yielding-functions-for-iteration-golang.html).
+> Read more at [Benchmarking Readline Iterators](http://bbengfort.github.io/programmer/2016/12/23/benchmarking-readlines.html) and [Yielding Functions for Iteration in Go](http://bbengfort.github.io/snippets/2016/12/22/yielding-functions-for-iteration-golang.html).
 
 ## Usage
 
