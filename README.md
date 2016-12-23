@@ -105,6 +105,14 @@ BenchmarkIteratorReadlinesLarge-8     	    1000	   2229104 ns/op
 
 We benchmark each word count function on small (100 lines), medium (1000 lines) and large (10000 lines) text files.  
 
+## Profiling
+
+Memory usage is just as critical as time performance, so I profiled memory usage using the [mprof](https://pypi.python.org/pypi/memory_profiler) utility by [Fabian Pedregosa](https://github.com/fabianp) and [Philippe Gervais](https://github.com/pgervais). The profiler ran a command-line script in `cmd/readline.go` that allows you to select an iteration function as an argument. For comparison, I also created a Python script that implemented the same functionality. All iterators are counting characters from a 3.9GB, 900,002 line file filled with "fizz buzz" text.
+
+![Memory Profiling of Readlines Iteration for a 3.9G Text File](profile/profile.png)
+
+Interestingly, while the channel readlines implementation took almost as long as Python, it used the least amount of memory. Both the iterator and callback implementations used slightly more memory, probably due to the state tracking each method was required to perform. These methods both took approximately the same time to complete, significantly faster than the channel method.
+
 ## Help Wanted!
 
 Have a method or mechanism for line-by-line reading of a file, submit it with a pull-request and add it to the list of benchmarks! In particular, I couldn't get the closure-style of read-by-line iterator work:

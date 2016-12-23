@@ -39,3 +39,6 @@ def make_fixture(path, lines, words=WORDS, minlen=MIN_LINE, maxlen=MAX_LINE):
 if __name__ == '__main__':
     for path, lines in FIXTURES.items():
         make_fixture(path, lines)
+
+    # Make the profiling fixture
+    # make_fixture('jumbo.txt', 750000, minlen=100, maxlen=2000)
